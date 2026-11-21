@@ -105,8 +105,23 @@ func run() int {
 		// A negative uid turns the drop off; 0 (root) is refused.
 		execUID = flag.Int("exec-uid", server.DefaultExecUID, "uid that agent processes run as (Bash, shell, custom tools, MCP stdio); -1 turns the drop off")
 		execGID = flag.Int("exec-gid", server.DefaultExecGID, "gid that agent processes run as")
+		// MCP server mode: expose this instance to another agent over stdio
+		// instead of starting a backend. It talks to an already-running instance
+		// over HTTP, so it needs no database and no key material; see mcpserver.
+		mcpServe    = flag.Bool("mcp-serve", false, "serve this ARTEX instance to an MCP client over stdio, then exit (does not start the backend)")
+		mcpURL      = flag.String("mcp-api-url", "http://127.0.0.1:8787", "with -mcp-serve: base URL of the running ARTEX instance")
+		mcpTokenEnv = flag.String("mcp-token-env", "ARTEX_API_TOKEN", "with -mcp-serve: environment variable holding the API token (keeps it out of the process list)")
+		mcpToken    = flag.String("mcp-token", "", "with -mcp-serve: the API token itself; prefer -mcp-token-env, which keeps it off the command line")
+		mcpInsecure = flag.Bool("mcp-insecure", false, "with -mcp-serve: skip TLS verification for a self-signed https API URL (loopback only)")
 	)
 	flag.Parse()
+
+	if *mcpServe {
+		// Deliberately before printBanner/StartLogCapture and before any store:
+		// stdio carries the protocol, so nothing else may write to stdout, and
+		// the server needs no database of its own.
+		return runMCPServe(*mcpURL, *mcpToken, *mcpTokenEnv, *mcpInsecure)
+	}
 
 	// hand the build version to the server package so GET /api/health can report it
 	// to the frontend top bar.

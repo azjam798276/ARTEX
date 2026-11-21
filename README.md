@@ -348,6 +348,11 @@ For remote MCP you can choose `http` (Streamable HTTP) or `sse` (legacy SSE) in 
 Legacy SSE servers usually establish the event stream with `GET /sse` and receive JSON-RPC over
 `/message?sessionId=...`; configure the URL as `/sse` and send `Authorization: Bearer <token>`.
 
+The reverse direction also works: `artex -mcp-serve` exposes this instance **as** an MCP server over
+stdio, so an external agent (a coding agent, for example) can commission and read engagements without
+learning the REST API. It authenticates with an API token and does not bypass any scope, approval or
+budget rule. See [docs/mcp-server.md](docs/mcp-server.md).
+
 ### Option 3: prebuilt binaries (Releases)
 
 Download the zip for your platform from [Releases](https://github.com/BaaRai/ARTEX/releases). It
